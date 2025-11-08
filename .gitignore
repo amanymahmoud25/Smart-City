@@ -1,0 +1,7 @@
+# Visual Studio temporary files and folders
+.vs/
+*.suo
+# Intermediate files
+[Oo]bj/
+# Compiled output
+[Bb]in/
