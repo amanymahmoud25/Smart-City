@@ -1,20 +1,25 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using System;
+using System.ComponentModel.DataAnnotations;
 using FluentValidation;
+
 namespace Smart_City.Dtos
 {
+    // ========== Register ==========
     public class RegisterDto
     {
         [Required, StringLength(120)]
         public string Name { get; set; }
 
-        [Required, StringLength(16, MinimumLength = 16, ErrorMessage = "National ID must be 16 digits.")]
-        [RegularExpression(@"^\d{16}$", ErrorMessage = "National ID must be 16 digits.")]
+        [Required,
+         StringLength(14, MinimumLength = 14, ErrorMessage = "National ID must be 14 digits."),
+         RegularExpression(@"^\d{14}$", ErrorMessage = "National ID must be 14 digits.")]
         public string NationalId { get; set; }
 
         [Required, EmailAddress]
         public string Email { get; set; }
 
-        [Required, Phone]
+        [Required,
+         RegularExpression(@"^01[0-9]{9}$", ErrorMessage = "Phone must start with 01 and be 11 digits.")]
         public string Phone { get; set; }
 
         [Required, MinLength(8, ErrorMessage = "Password must be at least 8 characters.")]
@@ -24,16 +29,19 @@ namespace Smart_City.Dtos
         public string Address { get; set; }
     }
 
+    // ========== Login ==========
     public class LoginDto
     {
-        [Required, StringLength(16, MinimumLength = 16)]
-        [RegularExpression(@"^\d{16}$", ErrorMessage = "National ID must be 16 digits.")]
+        [Required,
+         StringLength(14, MinimumLength = 14),
+         RegularExpression(@"^\d{14}$", ErrorMessage = "National ID must be 14 digits.")]
         public string NationalId { get; set; }
 
         [Required, MinLength(8)]
         public string Password { get; set; }
     }
 
+    // ========== Auth Response ==========
     public class AuthResponseDto
     {
         public string Token { get; set; }
@@ -43,24 +51,50 @@ namespace Smart_City.Dtos
         public DateTime? ExpiresAt { get; set; }
     }
 
-    public class RegisterDtoValidator : FluentValidation.AbstractValidator<RegisterDto>
+    // ========== FluentValidation ==========
+    public class RegisterDtoValidator : AbstractValidator<RegisterDto>
     {
         public RegisterDtoValidator()
         {
-            RuleFor(x => x.Name).NotEmpty().MaximumLength(120);
-            RuleFor(x => x.NationalId).NotEmpty().Length(16).Matches(@"^\d{16}$");
-            RuleFor(x => x.Email).NotEmpty().EmailAddress();
-            RuleFor(x => x.Phone).NotEmpty();
-            RuleFor(x => x.Password).NotEmpty().MinimumLength(8);
-            RuleFor(x => x.Address).NotEmpty().MaximumLength(250);
+            RuleFor(x => x.Name)
+                .NotEmpty().WithMessage("Name is required.")
+                .MaximumLength(120);
+
+            RuleFor(x => x.NationalId)
+                .NotEmpty().WithMessage("National ID is required.")
+                .Length(14).WithMessage("National ID must be exactly 14 digits.")
+                .Matches(@"^\d{14}$").WithMessage("National ID must contain only digits.");
+
+            RuleFor(x => x.Email)
+                .NotEmpty().WithMessage("Email is required.")
+                .EmailAddress();
+
+            RuleFor(x => x.Phone)
+                .NotEmpty().WithMessage("Phone is required.")
+                .Matches(@"^01[0-9]{9}$").WithMessage("Phone must start with 01 and be 11 digits.");
+
+            RuleFor(x => x.Password)
+                .NotEmpty().WithMessage("Password is required.")
+                .MinimumLength(8).WithMessage("Password must be at least 8 characters.");
+
+            RuleFor(x => x.Address)
+                .NotEmpty().WithMessage("Address is required.")
+                .MaximumLength(250);
         }
     }
-    public class LoginDtoValidator : FluentValidation.AbstractValidator<LoginDto>
+
+    public class LoginDtoValidator : AbstractValidator<LoginDto>
     {
         public LoginDtoValidator()
         {
-            RuleFor(x => x.NationalId).NotEmpty().Length(16).Matches(@"^\d{16}$");
-            RuleFor(x => x.Password).NotEmpty().MinimumLength(8);
+            RuleFor(x => x.NationalId)
+                .NotEmpty().WithMessage("National ID is required.")
+                .Length(14).WithMessage("National ID must be exactly 14 digits.")
+                .Matches(@"^\d{14}$").WithMessage("National ID must contain only digits.");
+
+            RuleFor(x => x.Password)
+                .NotEmpty().WithMessage("Password is required.")
+                .MinimumLength(8).WithMessage("Password must be at least 8 characters.");
         }
     }
 }
