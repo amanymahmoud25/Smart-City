@@ -19,7 +19,7 @@ namespace Smart_City.Dtos
         public string Email { get; set; }
 
         [Required,
-         RegularExpression(@"^01[0-9]{9}$", ErrorMessage = "Phone must start with 01 and be 11 digits.")]
+         RegularExpression(@"^\+?\d{8,15}$", ErrorMessage = "Phone must be digits only (8–15 digits) ")]
         public string Phone { get; set; }
 
         [Required, MinLength(8, ErrorMessage = "Password must be at least 8 characters.")]
@@ -71,7 +71,8 @@ namespace Smart_City.Dtos
 
             RuleFor(x => x.Phone)
                 .NotEmpty().WithMessage("Phone is required.")
-                .Matches(@"^01[0-9]{9}$").WithMessage("Phone must start with 01 and be 11 digits.");
+                .Matches(@"^\+?\d{8,15}$")
+                .WithMessage("Phone must be digits only (8–15 digits)");
 
             RuleFor(x => x.Password)
                 .NotEmpty().WithMessage("Password is required.")
