@@ -20,7 +20,6 @@ public class NotificationController : ControllerBase
 	// Helper: current user id from JWT
 	private int? GetCurrentUserId()
 	{
-		// Will work when JWT works
 		var idClaim = User.FindFirst("id");
 		if (idClaim == null)
 			return null;
@@ -29,20 +28,17 @@ public class NotificationController : ControllerBase
 
 	private bool IsAdmin() => User.IsInRole("Admin");
 
-	// Admin only
 	[HttpGet]
-	//[Authorize(Roles = "Admin")]
+	[Authorize(Roles = "Admin")]
 	public ActionResult<List<NotificationDto>> GetAll()
 	{
 		return Ok(_notificationManager.GetAll());
 	}
 
-	// Current user's notifications
 	[HttpGet("mine")]
-	//[Authorize]
+	[Authorize]
 	public ActionResult<List<NotificationDto>> GetMine()
 	{
-		// Will work when JWT works
 		var userId = GetCurrentUserId();
 		if (userId == null)
 			return Unauthorized();
@@ -50,7 +46,7 @@ public class NotificationController : ControllerBase
 	}
 
 	[HttpGet("citizens/{citizenId:int}")]
-	//[Authorize(Roles = "Admin")]
+	[Authorize(Roles = "Admin")]
 	public ActionResult<List<NotificationDto>> GetByCitizenId(int citizenId)
 	{
 		var dto = _notificationManager.GetByCitizenId(citizenId);
@@ -59,9 +55,9 @@ public class NotificationController : ControllerBase
 		return Ok(dto);
 	}
 
-	
+
 	[HttpGet("citizens/{citizenName:alpha}")]
-	//[Authorize(Roles = "Admin")]
+	[Authorize(Roles = "Admin")]
 	public ActionResult<List<NotificationDto>> GetByCitizenName(string citizenName)
 	{
 		var dto = _notificationManager.GetByCitizenName(citizenName);
@@ -71,14 +67,13 @@ public class NotificationController : ControllerBase
 	}
 
 	[HttpGet("{id:int}")]
-	//[Authorize]
+	[Authorize]
 	public ActionResult<NotificationDto> GetById(int id)
 	{
 		var dto = _notificationManager.GetById(id);
 		if (dto == null)
 			return NotFound();
 
-		// Will work when JWT works
 		var userId = GetCurrentUserId();
 		if (!IsAdmin() && (dto.Citizen == null || dto.Citizen.Id != userId))
 			return Forbid();
@@ -86,7 +81,7 @@ public class NotificationController : ControllerBase
 	}
 
 	[HttpPost]
-	//[Authorize(Roles = "Admin")]
+	[Authorize(Roles = "Admin")]
 	public IActionResult Create([FromBody] NotificationCreateDto createDto)
 	{
 		if (!ModelState.IsValid)
@@ -99,7 +94,7 @@ public class NotificationController : ControllerBase
 	}
 
 	[HttpPost("broadcast")]
-	//[Authorize(Roles = "Admin")]
+	[Authorize(Roles = "Admin")]
 	public IActionResult Broadcast([FromBody] BroadcastCreateDto createDto)
 	{
 		if (string.IsNullOrWhiteSpace(createDto.Message))
@@ -112,20 +107,19 @@ public class NotificationController : ControllerBase
 	}
 
 	[HttpDelete("{id:int}")]
-	//[Authorize]
+	[Authorize]
 	public IActionResult Delete(int id)
 	{
 		var dto = _notificationManager.GetById(id);
-		if (dto == null) 
+		if (dto == null)
 			return NotFound();
 
-		// Will work when JWT works
 		var userId = GetCurrentUserId();
 		if (!IsAdmin() && (dto.Citizen == null || dto.Citizen.Id != userId))
 			return Forbid();
 
 		var ok = _notificationManager.Delete(id);
-		if (!ok) 
+		if (!ok)
 			return BadRequest("Failed to delete notification");
 		return NoContent();
 	}

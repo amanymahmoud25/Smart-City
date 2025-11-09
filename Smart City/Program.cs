@@ -13,8 +13,11 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddAutoMapper(typeof(AutoMapperProfile));
 
 // DbContext
+/*builder.Services.AddDbContext<SmartCityContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));*/
+
 builder.Services.AddDbContext<SmartCityContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+	options.UseSqlServer(builder.Configuration.GetConnectionString("SQLExpressConnection")));
 
 // =============== Repositories ===============
 builder.Services.AddScoped<IUserRepository, UserRepository>();

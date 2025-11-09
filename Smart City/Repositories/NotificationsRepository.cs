@@ -65,7 +65,7 @@ public class NotificationRepository : INotificationsRepository
 		return true;
 	}
 
-	public bool Update(Notification notification)
+	/*public bool Update(Notification notification)
 	{
 		if (notification == null || notification.Id <= 0)
 			return false;
@@ -80,7 +80,7 @@ public class NotificationRepository : INotificationsRepository
 
 		_context.SaveChanges();
 		return true;
-	}
+	}*/
 
 	public bool Delete(int id)
 	{
