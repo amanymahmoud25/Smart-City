@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Smart_City.Models;
 using Smart_City.Repositories;
@@ -11,7 +11,7 @@ namespace Smart_City.Controllers
     public class AdminController : ControllerBase
     {
         private readonly IUserRepository _userRepo;
-        private readonly IComplaintsRepositry _complaintRepo;
+        private readonly IComplaintRepositry _complaintRepo;
         private readonly ISuggestionsRepositories _suggestionRepo;
         private readonly IUtilityIssueRepository _utilityRepo;
         private readonly IBillRepository _billRepo;
@@ -19,7 +19,7 @@ namespace Smart_City.Controllers
 
         public AdminController(
             IUserRepository userRepo,
-            IComplaintsRepositry complaintRepo,
+            IComplaintRepositry complaintRepo,
             ISuggestionsRepositories suggestionRepo,
             IUtilityIssueRepository utilityRepo,
             IBillRepository billRepo,
@@ -40,14 +40,14 @@ namespace Smart_City.Controllers
         [HttpGet("users/{id}")]
         public IActionResult GetUserById(int id)
         {
-            var user = _userRepo.GetByID(id);
+            var user = _userRepo.GetById(id);
             return user == null ? NotFound("User not found") : Ok(user);
         }
 
         [HttpPut("users/{id}")]
         public IActionResult UpdateUser(int id, [FromBody] User updatedUser)
         {
-            var existing = _userRepo.GetByID(id);
+            var existing = _userRepo.GetById(id);
             if (existing == null) return NotFound("User not found");
 
             existing.Name = updatedUser.Name ?? existing.Name;
@@ -56,13 +56,6 @@ namespace Smart_City.Controllers
 
             _userRepo.Update(existing);
             return Ok("User updated successfully");
-        }
-
-        [HttpPatch("users/{id}/deactivate")]
-        public IActionResult DeactivateUser(int id)
-        {
-            var result = _userRepo.DeactivateUser(id);
-            return result ? Ok("User deactivated successfully") : NotFound("User not found");
         }
 
         [HttpPut("users/{id}/promote")]
@@ -81,43 +74,50 @@ namespace Smart_City.Controllers
 
         // ===================== COMPLAINTS =====================
         [HttpGet("complaints")]
-        public IActionResult GetAllComplaints() => Ok(_complaintRepo.GetAll());
+        public async Task<IActionResult> GetAllComplaints()
+        {
+            var complaints = await _complaintRepo.GetAllAsync();
+            return Ok(complaints);
+        }
 
         [HttpGet("complaints/{id}")]
-        public IActionResult GetComplaintById(int id)
+        public async Task<IActionResult> GetComplaintById(int id)
         {
-            var complaint = _complaintRepo.GetById(id);
+            var complaint = await _complaintRepo.GetByIdAsync(id);
             return complaint == null ? NotFound("Complaint not found") : Ok(complaint);
         }
 
         [HttpPut("complaints/{id}")]
-        public IActionResult UpdateComplaint(int id, [FromBody] Complaint updatedComplaint)
+        public async Task<IActionResult> UpdateComplaint(int id, [FromBody] Complaint updatedComplaint)
         {
-            var complaint = _complaintRepo.GetById(id);
-            if (complaint == null) return NotFound("Complaint not found");
+            var existing = await _complaintRepo.GetByIdAsync(id);
+            if (existing == null) return NotFound("Complaint not found");
 
-            complaint.Status = updatedComplaint.Status ?? complaint.Status;
-            complaint.Description = updatedComplaint.Description ?? complaint.Description;
+            existing.Status = updatedComplaint.Status == default
+          ? existing.Status
+          : updatedComplaint.Status;
 
-            var result = _complaintRepo.Update(complaint);
+            existing.Description = updatedComplaint.Description ?? existing.Description;
+
+            var result = await _complaintRepo.UpdateAsync(existing);
             return result ? Ok("Complaint updated") : BadRequest("Failed to update complaint");
         }
 
         [HttpPut("complaints/{id}/resolve")]
-        public IActionResult ResolveComplaint(int id)
+        public async Task<IActionResult> ResolveComplaint(int id)
         {
-            var complaint = _complaintRepo.GetById(id);
+            var complaint = await _complaintRepo.GetByIdAsync(id);
             if (complaint == null) return NotFound("Complaint not found");
 
-            complaint.Status = "Resolved";
-            var result = _complaintRepo.Update(complaint);
-            return result ? Ok("Complaint resolved successfully") : BadRequest("Failed to resolve");
+            // تمرير ID الأدمن (هنا ثابت مؤقتًا = 1)
+            var result = await _complaintRepo.UpdateStatusAsync(id, ComplaintStatus.Resolved, adminId: 1);
+            return result ? Ok("Complaint resolved successfully") : BadRequest("Failed to resolve complaint");
         }
 
         [HttpDelete("complaints/{id}")]
-        public IActionResult DeleteComplaint(int id)
+        public async Task<IActionResult> DeleteComplaint(int id)
         {
-            var result = _complaintRepo.Delete(id);
+            var result = await _complaintRepo.DeleteAsync(id);
             return result ? Ok("Complaint deleted") : NotFound("Complaint not found");
         }
 
@@ -245,16 +245,18 @@ namespace Smart_City.Controllers
 
         // ===================== DASHBOARD =====================
         [HttpGet("dashboard/stats")]
-        public IActionResult GetSystemStats()
+        public async Task<IActionResult> GetSystemStats()
         {
+            var allComplaints = await _complaintRepo.GetAllAsync();
+            var unresolved = await _complaintRepo.GetUnresolvedAsync();
+
             var stats = new
             {
                 TotalUsers = _userRepo.GetAll().Count,
-                TotalComplaints = _complaintRepo.GetAll().Count,
-                UnresolvedComplaints = _complaintRepo.GetUnresolved().Count,
+                TotalComplaints = allComplaints.Count,
+                UnresolvedComplaints = unresolved.Count,
                 TotalSuggestions = _suggestionRepo.GetAll().Count,
                 TotalBills = _billRepo.GetAll().Count,
-                UnpaidBills = _billRepo.GetUnpaid().Count,
                 TotalUtilityIssues = _utilityRepo.GetAll().Count
             };
             return Ok(stats);
