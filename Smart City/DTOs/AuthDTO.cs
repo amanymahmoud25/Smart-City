@@ -70,6 +70,7 @@ namespace Smart_City.Dtos
                 .EmailAddress();
 
             RuleFor(x => x.Phone)
+				.NotEmpty().WithMessage("Phone is required.")
 				.Matches(@"^\+?\d{8,15}$")
 				.WithMessage("Phone must be digits only (8–15 digits)");
 
