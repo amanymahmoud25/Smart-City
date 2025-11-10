@@ -2,6 +2,8 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Smart_City.Models;
 using Smart_City.Repositories;
+using System;
+using System.Threading.Tasks;
 
 namespace Smart_City.Controllers
 {
@@ -94,8 +96,8 @@ namespace Smart_City.Controllers
             if (existing == null) return NotFound("Complaint not found");
 
             existing.Status = updatedComplaint.Status == default
-          ? existing.Status
-          : updatedComplaint.Status;
+                ? existing.Status
+                : updatedComplaint.Status;
 
             existing.Description = updatedComplaint.Description ?? existing.Description;
 
@@ -109,7 +111,6 @@ namespace Smart_City.Controllers
             var complaint = await _complaintRepo.GetByIdAsync(id);
             if (complaint == null) return NotFound("Complaint not found");
 
-            // تمرير ID الأدمن (هنا ثابت مؤقتًا = 1)
             var result = await _complaintRepo.UpdateStatusAsync(id, ComplaintStatus.Resolved, adminId: 1);
             return result ? Ok("Complaint resolved successfully") : BadRequest("Failed to resolve complaint");
         }
@@ -153,6 +154,38 @@ namespace Smart_City.Controllers
             return result ? Ok("Suggestion deleted") : NotFound("Suggestion not found");
         }
 
+        // ===================== BILLS =====================
+        [HttpGet("bills")]
+        public IActionResult GetAllBills() => Ok(_billRepo.GetAll());
+
+        [HttpGet("bills/{id}")]
+        public IActionResult GetBillById(int id)
+        {
+            var bill = _billRepo.GetById(id);
+            return bill == null ? NotFound("Bill not found") : Ok(bill);
+        }
+
+        [HttpPut("bills/{id}/paid")]
+        public IActionResult MarkBillAsPaid(int id)
+        {
+            var result = _billRepo.MarkAsPaid(id);
+            return result ? Ok("Bill marked as paid") : NotFound("Bill not found");
+        }
+
+        [HttpDelete("bills/{id}")]
+        public IActionResult DeleteBill(int id)
+        {
+            var result = _billRepo.Delete(id);
+            return result ? Ok("Bill deleted") : NotFound("Bill not found");
+        }
+
+        [HttpGet("bills/citizen/{citizenId}")]
+        public IActionResult GetBillsByCitizenId(int citizenId)
+        {
+            var bills = _billRepo.GetByCitizenId(citizenId);
+            return Ok(bills);
+        }
+
         // ===================== UTILITY ISSUES =====================
         [HttpGet("utility-issues")]
         public IActionResult GetAllUtilityIssues() => Ok(_utilityRepo.GetAll());
@@ -192,29 +225,18 @@ namespace Smart_City.Controllers
             return result ? Ok("Utility issue deleted") : NotFound("Issue not found");
         }
 
-        // ===================== BILLS =====================
-        [HttpGet("bills")]
-        public IActionResult GetAllBills() => Ok(_billRepo.GetAll());
-
-        [HttpGet("bills/{id}")]
-        public IActionResult GetBillById(int id)
+        [HttpGet("utility-issues/status/{status}")]
+        public IActionResult GetByStatus(string status)
         {
-            var bill = _billRepo.GetById(id);
-            return bill == null ? NotFound("Bill not found") : Ok(bill);
+            var list = _utilityRepo.GetByStatus(status);
+            return Ok(list);
         }
 
-        [HttpPut("bills/{id}/paid")]
-        public IActionResult MarkBillAsPaid(int id)
+        [HttpGet("utility-issues/type/{type}")]
+        public IActionResult GetByType(UtilityIssueType type)
         {
-            var result = _billRepo.MarkAsPaid(id);
-            return result ? Ok("Bill marked as paid") : NotFound("Bill not found");
-        }
-
-        [HttpDelete("bills/{id}")]
-        public IActionResult DeleteBill(int id)
-        {
-            var result = _billRepo.Delete(id);
-            return result ? Ok("Bill deleted") : NotFound("Bill not found");
+            var list = _utilityRepo.GetByType(type);
+            return Ok(list);
         }
 
         // ===================== NOTIFICATIONS =====================

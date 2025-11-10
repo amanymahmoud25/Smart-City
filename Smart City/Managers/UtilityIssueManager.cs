@@ -2,20 +2,21 @@
 using Smart_City.Dtos;
 using Smart_City.Models;
 using Smart_City.Repositories;
-using System;
-using System.Collections.Generic;
+
 
 namespace Smart_City.Managers
 {
     public class UtilityIssueManager : IUtilityIssueManager
     {
-        private readonly UtilityIssueRepository _repo;
+        private readonly IUtilityIssueRepository _repo; 
         private readonly IMapper _mapper;
+        private readonly INotificationManager _notificationManager;
 
-        public UtilityIssueManager(UtilityIssueRepository repo, IMapper mapper)
+        public UtilityIssueManager(IUtilityIssueRepository repo, IMapper mapper, INotificationManager notificationManager) 
         {
             _repo = repo ?? throw new ArgumentNullException(nameof(repo));
             _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
+            _notificationManager = notificationManager ?? throw new ArgumentNullException(nameof(notificationManager));
         }
 
         public List<UtilityIssueDto> GetAll()
@@ -27,7 +28,8 @@ namespace Smart_City.Managers
         public UtilityIssueDto GetById(int id)
         {
             var issue = _repo.GetById(id);
-            if (issue == null) return null;
+            if (issue == null) 
+                return null;
             return _mapper.Map<UtilityIssueDto>(issue);
         }
 
@@ -39,7 +41,8 @@ namespace Smart_City.Managers
 
         public UtilityIssueDto Create(UtilityIssueCreateDto dto, int citizenId)
         {
-            if (dto == null) return null;
+            if (dto == null) 
+                return null;
 
             var issue = new UtilityIssue
             {
@@ -50,19 +53,25 @@ namespace Smart_City.Managers
                 CitizenId = citizenId
             };
 
-            var saved = _repo.Add(issue); 
-            if (!saved) return null;
+            var saved = _repo.Add(issue);
+            if (!saved) 
+                return null;
 
+            _notificationManager.CreateForCitizen(citizenId, $"Your utility issue has been reported and is pending review. Type: {dto.Type}.");
 
-                 return _mapper.Map<UtilityIssueDto>(issue);
+            return _mapper.Map<UtilityIssueDto>(issue);
         }
 
         public UtilityIssueDto Update(UtilityIssueUpdateDto dto)
         {
-            if (dto == null) return null;
+            if (dto == null) 
+                return null;
 
             var issue = _repo.GetById(dto.Id);
-            if (issue == null) return null;
+            if (issue == null) 
+                return null;
+
+            var originalStatus = issue.Status;
 
             if (!string.IsNullOrEmpty(dto.Status))
                 issue.Status = dto.Status;
@@ -71,7 +80,13 @@ namespace Smart_City.Managers
                 issue.Description = dto.Description;
 
             var updated = _repo.Update(issue);
-            if (!updated) return null;
+            if (!updated) 
+                return null;
+
+            if (!string.IsNullOrEmpty(dto.Status) && !string.Equals(originalStatus, dto.Status, StringComparison.OrdinalIgnoreCase))
+            {
+                _notificationManager.CreateForCitizen(issue.CitizenId, $"Status update for your utility issue: {dto.Status}.");
+            }
 
             return _mapper.Map<UtilityIssueDto>(issue);
         }
@@ -83,7 +98,17 @@ namespace Smart_City.Managers
 
         public bool MarkAsResolved(int id)
         {
-            return _repo.MarkAsResolved(id);
+            // Get issue to know the citizen
+            var issue = _repo.GetById(id);
+            if (issue == null) 
+                return false;
+
+            var resolved = _repo.MarkAsResolved(id);
+            if (!resolved) 
+                return false;
+
+            _notificationManager.CreateForCitizen(issue.CitizenId, "Your reported utility issue has been resolved. Thank you for your patience.");
+            return true;
         }
 
         public List<UtilityIssueDto> GetByType(UtilityIssueType type)

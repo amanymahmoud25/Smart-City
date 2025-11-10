@@ -27,8 +27,8 @@ namespace Smart_City.Managers
 
         public bool CreateForCitizen(int citizenId, string message)
         {
-            var citizen = _userRepo.GetCitizenByIdAsync(citizenId).Result; 
-            if (citizen == null) return false;
+            /*var citizen = _userRepo.GetCitizenByIdAsync(citizenId).Result; 
+            if (citizen == null) return false;*/ // returns null!!
 
             var notification = _mapper.Map<Notification>(
                 new NotificationCreateDto { Message = message, CitizenId = citizenId }

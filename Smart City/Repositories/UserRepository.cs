@@ -23,12 +23,12 @@ namespace Smart_City.Repositories
         }
 
         // Get User By ID
-        public async Task<User> GetByIdAsync(int id)
+        public  Task<User> GetByIdAsync(int id)
         {
             if (id <= 0)
                 return null;
 
-            return await _context.Users.FirstOrDefaultAsync(u => u.Id == id);
+            return _context.Users.FirstOrDefaultAsync(u => u.Id == id);
         }
 
         //  Get User by National ID
