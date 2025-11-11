@@ -14,7 +14,6 @@ namespace Smart_City.Models
 
         public DateTime DateSubmitted { get; set; } = DateTime.UtcNow;
 
-        
         public DateTime? UpdatedAt { get; set; }
 
         public ComplaintStatus Status { get; set; } = ComplaintStatus.Pending;
@@ -22,7 +21,6 @@ namespace Smart_City.Models
         public string? Location { get; set; }
         public string? ImageUrl { get; set; }
 
-        
         public int CitizenId { get; set; }
         public Citizen Citizen { get; set; }
 

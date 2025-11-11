@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Smart_City.Models;
-using Smart_City.Repositories;
+using Smart_City.Dtos;
+using Smart_City.Managers;
 using System.Threading.Tasks;
 
 namespace Smart_City.Controllers
@@ -11,30 +11,34 @@ namespace Smart_City.Controllers
     [Authorize(Roles = "Citizen")]
     public class ComplaintsController : ControllerBase
     {
-        private readonly IComplaintRepositry _complaintRepo;
+        private readonly IComplaintManager _manager;
 
-        public ComplaintsController(IComplaintRepositry complaintRepo)
+        public ComplaintsController(IComplaintManager manager)
         {
-            _complaintRepo = complaintRepo;
+            _manager = manager;
         }
 
-        // المواطن يقدّم شكوى جديدة
+       
         [HttpPost]
-        public async Task<IActionResult> CreateComplaint([FromBody] Complaint complaint)
+        public async Task<IActionResult> CreateComplaint([FromBody] ComplaintCreateDto dto, [FromQuery] int citizenId)
         {
-            if (complaint == null) return BadRequest("Invalid complaint data");
+            if (!ModelState.IsValid)
+                return ValidationProblem(ModelState);
 
-            complaint.Status = ComplaintStatus.Pending;
-            var result = await _complaintRepo.AddAsync(complaint);
+            if (citizenId <= 0)
+                return BadRequest("citizenId is required");
 
-            return result ? Ok("Complaint submitted successfully") : BadRequest("Failed to submit complaint");
+            var created = await _manager.CreateAsync(dto, citizenId);
+            if (created == null)
+                return BadRequest("Failed to submit complaint");
+
+            return Ok("Complaint submitted successfully");
         }
 
-        // المواطن يشوف كل الشكاوى الخاصة به
         [HttpGet("my/{citizenId}")]
         public async Task<IActionResult> GetMyComplaints(int citizenId)
         {
-            var complaints = await _complaintRepo.GetByCitizenIdAsync(citizenId);
+            var complaints = await _manager.GetByCitizenAsync(citizenId, null, null, null);
             return Ok(complaints);
         }
     }
