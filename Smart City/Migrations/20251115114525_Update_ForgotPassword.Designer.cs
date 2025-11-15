@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Smart_City.Models;
 
@@ -11,9 +12,11 @@ using Smart_City.Models;
 namespace Smart_City.Migrations
 {
     [DbContext(typeof(SmartCityContext))]
-    partial class SmartCityContextModelSnapshot : ModelSnapshot
+    [Migration("20251115114525_Update_ForgotPassword")]
+    partial class Update_ForgotPassword
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

@@ -70,5 +70,36 @@ namespace Smart_City.Controllers
                 : Ok(new { status = "success", data = user });
         }
 
+        // =========  FORGOT PASSWORD + OTP  =========
+
+        [HttpPost("forgot-password")]
+        [AllowAnonymous]
+        public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordDto dto)
+        {
+            if (!ModelState.IsValid) return ValidationProblem(ModelState);
+
+            var success = await _authManager.GeneratePasswordResetOtpAsync(dto.NationalId, dto.Email);
+
+            if (!success)
+                return BadRequest(new { status = "error", message = "Invalid National ID or Email" });
+
+            return Ok(new { status = "success", message = "OTP has been sent to your email" });
+        }
+
+        [HttpPost("reset-password")]
+        [AllowAnonymous]
+        public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordDto dto)
+        {
+            if (!ModelState.IsValid) return ValidationProblem(ModelState);
+
+            var success = await _authManager.ResetPasswordWithOtpAsync(dto.NationalId, dto.Otp, dto.NewPassword);
+
+            if (!success)
+                return BadRequest(new { status = "error", message = "Invalid or expired OTP" });
+
+            return Ok(new { status = "success", message = "Password has been reset successfully" });
+        }
+
+        // ===========================================
     }
 }

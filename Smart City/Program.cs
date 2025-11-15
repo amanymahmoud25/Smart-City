@@ -3,7 +3,7 @@ using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-using Microsoft.OpenApi.Models;  
+using Microsoft.OpenApi.Models;
 using Smart_City.Managers;
 using Smart_City.Mapping;
 using Smart_City.Models;
@@ -16,7 +16,7 @@ builder.Services.AddAutoMapper(typeof(AutoMapperProfile));
 
 // DbContext
 builder.Services.AddDbContext<SmartCityContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("SQLExpressConnection")));
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 // =============== Repositories ===============
 builder.Services.AddScoped<IUserRepository, UserRepository>();
@@ -63,7 +63,6 @@ builder.Services
             ValidAudience = jwtAudience,
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)),
             RoleClaimType = ClaimTypes.Role
-
         };
     });
 

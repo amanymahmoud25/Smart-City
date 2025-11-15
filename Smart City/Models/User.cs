@@ -1,5 +1,4 @@
-﻿using System.Reflection.Metadata.Ecma335;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 
 namespace Smart_City.Models
 {
@@ -26,13 +25,15 @@ namespace Smart_City.Models
         [Required]
         public string Role { get; set; }
 
-
         [Required]
         public string? Address { get; set; }
+
         public DateTime CreatedAt { get; set; } = DateTime.Now;
 
         public bool IsActive { get; set; } = true;
 
-
+        // ====== FOR PASSWORD RESET (OTP) ======
+        public string? PasswordResetOtp { get; set; }
+        public DateTime? PasswordResetExpiry { get; set; }
     }
 }

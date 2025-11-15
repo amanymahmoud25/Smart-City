@@ -6,6 +6,8 @@ using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using System.Net;
+using System.Net.Mail;
 
 namespace Smart_City.Managers
 {
@@ -99,6 +101,78 @@ namespace Smart_City.Managers
                 User = _mapper.Map<UserDto>(user)
             };
         }
+
+        // =========  OTP FOR FORGOT PASSWORD  =========
+
+        public async Task<bool> GeneratePasswordResetOtpAsync(string nationalId, string email)
+        {
+            var user = await _userRepository.GetByNationalIdAsync(nationalId);
+            if (user == null)
+                return false;
+
+            // تأكيد إن الإيميل اللي دخله المستخدم هو نفس المسجل
+            if (!string.Equals(user.Email?.Trim(), email?.Trim(), StringComparison.OrdinalIgnoreCase))
+                return false;
+
+            var random = new Random();
+            var code = random.Next(100000, 999999).ToString(); // 6 digits
+
+            user.PasswordResetOtp = code;
+            user.PasswordResetExpiry = DateTime.UtcNow.AddMinutes(3); // OTP صالح 3 دقائق
+
+            await _userRepository.UpdateAsync(user);
+
+            await SendOtpEmailAsync(user.Email, code);
+
+            return true;
+        }
+
+        public async Task<bool> ResetPasswordWithOtpAsync(string nationalId, string otp, string newPassword)
+        {
+            var user = await _userRepository.GetByNationalIdAsync(nationalId);
+            if (user == null)
+                return false;
+
+            if (user.PasswordResetOtp != otp ||
+                user.PasswordResetExpiry == null ||
+                user.PasswordResetExpiry < DateTime.UtcNow)
+            {
+                return false;
+            }
+
+            user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(newPassword);
+            user.PasswordResetOtp = null;
+            user.PasswordResetExpiry = null;
+
+            await _userRepository.UpdateAsync(user);
+            return true;
+        }
+
+        private async Task SendOtpEmailAsync(string toEmail, string otp)
+        {
+            var host = _config["Smtp:Host"];
+            var port = int.Parse(_config["Smtp:Port"] ?? "587");
+            var fromEmail = _config["Smtp:From"];
+            var username = _config["Smtp:Username"];
+            var password = _config["Smtp:Password"];
+
+            using var client = new SmtpClient(host, port)
+            {
+                EnableSsl = true,
+                Credentials = new NetworkCredential(username, password)
+            };
+
+            var message = new MailMessage(fromEmail, toEmail)
+            {
+                Subject = "Smart City - Password Reset OTP",
+                Body = $"Your OTP code is: {otp}\nThis code is valid for 3 minutes.",
+                IsBodyHtml = false
+            };
+
+            await client.SendMailAsync(message);
+        }
+
+        // =============================================
 
         private string GenerateJwtToken(User user)
         {
