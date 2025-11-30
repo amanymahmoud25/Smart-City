@@ -39,27 +39,32 @@ namespace Smart_City.Managers
             return _mapper.Map<List<SuggestionDto>>(list);
         }
 
-        public SuggestionDto Create(SuggestionCreateDto dto)
+       public SuggestionDto Create(SuggestionCreateDto dto, int citizenId)
+       {
+    if (citizenId <= 0)
+        return null;
+
+    var suggestion = _mapper.Map<Suggestion>(dto);
+    suggestion.CitizenId = citizenId;
+    suggestion.DateSubmitted = DateTime.Now;
+    suggestion.Status = "Pending";
+
+    var saved = _repo.Add(suggestion);
+
+    if (saved)
+    {
+        _notificationRepo.Add(new Notification
         {
-            var suggestion = _mapper.Map<Suggestion>(dto);
-            suggestion.DateSubmitted = DateTime.Now;
-            suggestion.Status = "Pending";
+            CitizenId = suggestion.CitizenId,
+            Message = "Your suggestion has been submitted successfully."
+        });
 
-            var saved = _repo.Add(suggestion);
+        return _mapper.Map<SuggestionDto>(suggestion);
+    }
 
-            if (saved)
-            {
-                _notificationRepo.Add(new Notification
-                {
-                    CitizenId = suggestion.CitizenId,
-                    Message = "Your suggestion has been submitted successfully."
-                });
+    return null;
+}
 
-                return _mapper.Map<SuggestionDto>(suggestion);
-            }
-
-            return null;
-        }
 
         public SuggestionDto Update(int id, SuggestionUpdateDto dto)
         {
