@@ -1,11 +1,15 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using Smart_City.Managers;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Smart_City.Dtos;
+using Smart_City.Managers;
+using System.Threading.Tasks;
+using System.Collections.Generic;
 
 namespace Smart_City.Controllers
 {
+    [Route("api/suggestions")]
     [ApiController]
-    [Route("api/[controller]")]
+    [Authorize(Roles = "Citizen")]
     public class SuggestionsController : ControllerBase
     {
         private readonly ISuggestionManager _manager;
@@ -15,45 +19,50 @@ namespace Smart_City.Controllers
             _manager = manager;
         }
 
-        [HttpGet]
-        public ActionResult<List<SuggestionDto>> GetAll()
+        [HttpPost]
+        public async Task<IActionResult> CreateSuggestion([FromBody] SuggestionCreateDto dto, [FromQuery] int citizenId)
         {
-            return Ok(_manager.GetAll());
+            if (!ModelState.IsValid)
+                return ValidationProblem(ModelState);
+
+            if (citizenId <= 0)
+                return BadRequest("citizenId is required");
+
+            var created = _manager.Create(dto, citizenId); // تحتاج تعديل في الـ manager لتقبل citizenId
+            if (created == null)
+                return BadRequest("Failed to submit suggestion");
+
+            return Ok("Suggestion submitted successfully");
+        }
+
+        [HttpGet("my/{citizenId}")]
+        public IActionResult GetMySuggestions(int citizenId)
+        {
+            if (citizenId <= 0)
+                return BadRequest("citizenId is required");
+
+            var suggestions = _manager.GetByCitizenId(citizenId);
+            return Ok(suggestions);
         }
 
         [HttpGet("{id}")]
-        public ActionResult<SuggestionDto> GetById(int id)
+        public IActionResult GetById(int id)
         {
             var result = _manager.GetById(id);
-            if (result == null) return NotFound();
-            return Ok(result);
-        }
-
-        [HttpGet("citizen/{citizenId}")]
-        public ActionResult<List<SuggestionDto>> GetByCitizenId(int citizenId)
-        {
-            return Ok(_manager.GetByCitizenId(citizenId));
-        }
-
-        [HttpPost]
-        public ActionResult<SuggestionDto> Create([FromBody] SuggestionCreateDto dto)
-        {
-            if (!ModelState.IsValid)
-                return BadRequest(ModelState);
-
-            var result = _manager.Create(dto);
-            if (result == null) return BadRequest();
+            if (result == null)
+                return NotFound();
             return Ok(result);
         }
 
         [HttpPut("{id}")]
-        public ActionResult<SuggestionDto> Update(int id, [FromBody] SuggestionUpdateDto dto)
+        public IActionResult Update(int id, [FromBody] SuggestionUpdateDto dto)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
             var result = _manager.Update(id, dto);
-            if (result == null) return NotFound();
+            if (result == null)
+                return NotFound();
             return Ok(result);
         }
 
@@ -61,7 +70,8 @@ namespace Smart_City.Controllers
         public IActionResult Delete(int id)
         {
             var deleted = _manager.Delete(id);
-            if (!deleted) return NotFound();
+            if (!deleted)
+                return NotFound();
             return Ok("Deleted successfully");
         }
     }
