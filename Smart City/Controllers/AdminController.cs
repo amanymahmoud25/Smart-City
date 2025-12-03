@@ -283,5 +283,17 @@ namespace Smart_City.Controllers
             };
             return Ok(stats);
         }
+        [HttpPut("suggestions/{id}/status")]
+        public IActionResult UpdateSuggestionStatus(int id, [FromBody] string status)
+        {
+          var suggestion = _suggestionRepo.GetById(id);
+          if (suggestion == null)
+        return NotFound("Suggestion not found");
+
+        suggestion.Status = status;
+
+        var result = _suggestionRepo.Update(suggestion);
+        return result ? Ok("Suggestion status updated") : BadRequest("Failed to update status");
+        }
     }
 }
