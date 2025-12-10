@@ -7,25 +7,30 @@ namespace Smart_City.Dtos
     // ========== Register ==========
     public class RegisterDto
     {
-        [Required, StringLength(120)]
+        [Required(ErrorMessage = "Name is required.")]
+        [StringLength(120, ErrorMessage = "Name cannot exceed 120 characters.")]
         public string Name { get; set; }
 
-        [Required,
-         StringLength(14, MinimumLength = 14, ErrorMessage = "National ID must be 14 digits."),
-         RegularExpression(@"^\d{14}$", ErrorMessage = "National ID must be 14 digits.")]
+        [Required(ErrorMessage = "National ID is required.")]
+        [StringLength(14, MinimumLength = 14, ErrorMessage = "National ID must be exactly 14 digits.")]
+        [RegularExpression(@"^\d{14}$", ErrorMessage = "National ID must be 14 digits.")]
         public string NationalId { get; set; }
 
-        [Required, EmailAddress]
+        [Required(ErrorMessage = "Email is required.")]
+        [EmailAddress(ErrorMessage = "Invalid email format.")]
         public string Email { get; set; }
 
-        [Required,
-		 RegularExpression(@"^\+?\d{8,15}$", ErrorMessage = "Phone must be digits only (8–15 digits) ")]
-		public string Phone { get; set; }
+        [Required(ErrorMessage = "Phone number is required.")]
+        [RegularExpression(@"^\+?\d{8,15}$",
+            ErrorMessage = "Phone must be digits only and between 8–15 digits.")]
+        public string Phone { get; set; }
 
-        [Required, MinLength(8, ErrorMessage = "Password must be at least 8 characters.")]
+        [Required(ErrorMessage = "Password is required.")]
+        [MinLength(8, ErrorMessage = "Password must be at least 8 characters long.")]
         public string Password { get; set; }
 
-        [Required, StringLength(250)]
+        [Required(ErrorMessage = "Address is required.")]
+        [StringLength(250, ErrorMessage = "Address cannot exceed 250 characters.")]
         public string Address { get; set; }
     }
 
@@ -70,11 +75,11 @@ namespace Smart_City.Dtos
                 .EmailAddress();
 
             RuleFor(x => x.Phone)
-				.NotEmpty().WithMessage("Phone is required.")
-				.Matches(@"^\+?\d{8,15}$")
-				.WithMessage("Phone must be digits only (8–15 digits)");
+                .NotEmpty().WithMessage("Phone is required.")
+                .Matches(@"^\+?\d{8,15}$")
+                .WithMessage("Phone must be digits only (8–15 digits)");
 
-			RuleFor(x => x.Password)
+            RuleFor(x => x.Password)
                 .NotEmpty().WithMessage("Password is required.")
                 .MinimumLength(8).WithMessage("Password must be at least 8 characters.");
 

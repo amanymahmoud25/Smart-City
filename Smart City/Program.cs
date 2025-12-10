@@ -70,6 +70,25 @@ builder.Services.AddAuthorization();
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 
+
+
+// =============== CORS ===============
+builder.Services.AddCors(options =>
+{       
+    options.AddPolicy("AllowFrontend", policy =>
+    {
+        policy
+            .WithOrigins(
+                "http://localhost:3000",
+                "https://localhost:3000",
+                "http://smartcity.tryasp.net",
+                "https://smartcity.tryasp.net"
+            )
+            .AllowAnyHeader()
+            .AllowAnyMethod();
+    });
+});
+
 // ===== configure Swagger to support Bearer auth (Authorize button) =====
 builder.Services.AddSwaggerGen(c =>
 {
@@ -117,12 +136,16 @@ if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
+    //app.UseSwaggerUI(c =>
+    //{
+    //    c.SwaggerEndpoint("/swagger/v1/swagger.json", "Smart City API v1");
+    //});
 }
 
 app.UseHttpsRedirection();
-
-app.UseAuthentication(); // must be before UseAuthorization
+app.UseCors("AllowFrontend");
+app.UseAuthentication(); 
 app.UseAuthorization();
-
+app.MapGet("/", () => Results.Redirect("/swagger"));
 app.MapControllers();
 app.Run();

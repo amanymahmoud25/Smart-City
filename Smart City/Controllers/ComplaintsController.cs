@@ -3,6 +3,8 @@ using Microsoft.AspNetCore.Mvc;
 using Smart_City.Dtos;
 using Smart_City.Managers;
 using System.Threading.Tasks;
+using System.Security.Claims;
+
 
 namespace Smart_City.Controllers
 {
@@ -18,15 +20,18 @@ namespace Smart_City.Controllers
             _manager = manager;
         }
 
-       
+
         [HttpPost]
-        public async Task<IActionResult> CreateComplaint([FromBody] ComplaintCreateDto dto, [FromQuery] int citizenId)
+        public async Task<IActionResult> CreateComplaint([FromBody] ComplaintCreateDto dto)
         {
+            var claimId = User.FindFirstValue(ClaimTypes.NameIdentifier)
+                          ?? User.FindFirstValue("id");
+
+            if (!int.TryParse(claimId, out var citizenId))
+                return Unauthorized("Invalid token");
+
             if (!ModelState.IsValid)
                 return ValidationProblem(ModelState);
-
-            if (citizenId <= 0)
-                return BadRequest("citizenId is required");
 
             var created = await _manager.CreateAsync(dto, citizenId);
             if (created == null)
@@ -35,10 +40,19 @@ namespace Smart_City.Controllers
             return Ok("Complaint submitted successfully");
         }
 
-        [HttpGet("my/{citizenId}")]
-        public async Task<IActionResult> GetMyComplaints(int citizenId)
+
+
+        [HttpGet("my/citizenId")]
+        public async Task<IActionResult> GetMyComplaints()
         {
+            var claimId = User.FindFirstValue(ClaimTypes.NameIdentifier)
+                          ?? User.FindFirstValue("id");
+
+            if (!int.TryParse(claimId, out var citizenId))
+                return Unauthorized("Invalid token");
+
             var complaints = await _manager.GetByCitizenAsync(citizenId, null, null, null);
+
             return Ok(complaints);
         }
     }

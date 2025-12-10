@@ -26,19 +26,22 @@ namespace Smart_City.Managers
 
         public async Task<AuthResponseDto> RegisterAsync(RegisterDto dto)
         {
+            if (dto == null)
+                return new AuthResponseDto { Success = false, Message = "Invalid data." };
+
             var exists = await _userRepository.GetByNationalIdAsync(dto.NationalId);
             if (exists != null)
                 return new AuthResponseDto { Success = false, Message = "User already exists" };
 
-            var user = new User
+            var user = new Citizen
             {
                 Name = dto.Name,
                 NationalId = dto.NationalId,
                 Email = dto.Email,
                 Phone = dto.Phone,
+                Address = dto.Address,
                 Role = "Citizen",
-                PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.Password),
-                Address = dto.Address
+                PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.Password)
             };
 
             await _userRepository.AddAsync(user);
@@ -52,6 +55,7 @@ namespace Smart_City.Managers
                 User = _mapper.Map<UserDto>(user)
             };
         }
+
 
         public async Task<AuthResponseDto> LoginAsync(LoginDto dto)
         {
@@ -110,7 +114,6 @@ namespace Smart_City.Managers
             if (user == null)
                 return false;
 
-            // تأكيد إن الإيميل اللي دخله المستخدم هو نفس المسجل
             if (!string.Equals(user.Email?.Trim(), email?.Trim(), StringComparison.OrdinalIgnoreCase))
                 return false;
 
@@ -118,7 +121,7 @@ namespace Smart_City.Managers
             var code = random.Next(100000, 999999).ToString(); // 6 digits
 
             user.PasswordResetOtp = code;
-            user.PasswordResetExpiry = DateTime.UtcNow.AddMinutes(3); // OTP صالح 3 دقائق
+            user.PasswordResetExpiry = DateTime.UtcNow.AddMinutes(3); // OTP 3 minute
 
             await _userRepository.UpdateAsync(user);
 

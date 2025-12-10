@@ -1,8 +1,10 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Smart_City.Dtos;
 using Smart_City.Models;
 using Smart_City.Repositories;
 using System;
+using System.Security.Claims;
 using System.Threading.Tasks;
 
 namespace Smart_City.Controllers
@@ -90,29 +92,48 @@ namespace Smart_City.Controllers
         }
 
         [HttpPut("complaints/{id}")]
-        public async Task<IActionResult> UpdateComplaint(int id, [FromBody] Complaint updatedComplaint)
+        public async Task<IActionResult> UpdateComplaint(int id, [FromBody] ComplaintUpdateDto dto)
         {
+            if (!ModelState.IsValid)
+                return ValidationProblem(ModelState);
+
             var existing = await _complaintRepo.GetByIdAsync(id);
-            if (existing == null) return NotFound("Complaint not found");
+            if (existing == null)
+                return NotFound("Complaint not found");
 
-            existing.Status = updatedComplaint.Status == default
-                ? existing.Status
-                : updatedComplaint.Status;
+            if (!string.IsNullOrWhiteSpace(dto.Title))
+                existing.Title = dto.Title;
+            if (!string.IsNullOrWhiteSpace(dto.Description))
+                existing.Description = dto.Description;
+            if (!string.IsNullOrWhiteSpace(dto.Location))
+                existing.Location = dto.Location;
+            if (!string.IsNullOrWhiteSpace(dto.ImageUrl))
+                existing.ImageUrl = dto.ImageUrl;
 
-            existing.Description = updatedComplaint.Description ?? existing.Description;
+            existing.UpdatedAt = DateTime.UtcNow;
 
-            var result = await _complaintRepo.UpdateAsync(existing);
-            return result ? Ok("Complaint updated") : BadRequest("Failed to update complaint");
+            var updated = await _complaintRepo.UpdateAsync(existing);
+            return updated
+                ? Ok("Complaint updated successfully")
+                : BadRequest("Failed to update complaint");
         }
 
-        [HttpPut("complaints/{id}/resolve")]
-        public async Task<IActionResult> ResolveComplaint(int id)
+        [HttpPut("complaints/{id}/status")]
+        public async Task<IActionResult> UpdateComplaintStatus(int id, [FromBody] ComplaintStatusUpdateDto dto)
         {
-            var complaint = await _complaintRepo.GetByIdAsync(id);
-            if (complaint == null) return NotFound("Complaint not found");
+            if (!ModelState.IsValid)
+                return ValidationProblem(ModelState);
 
-            var result = await _complaintRepo.UpdateStatusAsync(id, ComplaintStatus.Resolved, adminId: 1);
-            return result ? Ok("Complaint resolved successfully") : BadRequest("Failed to resolve complaint");
+            var claimId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("id");
+            if (!int.TryParse(claimId, out var adminId))
+                return Unauthorized(new { status = "error", message = "Invalid token" });
+
+            var updated = await _complaintRepo.UpdateStatusAsync(id, dto.Status, adminId);
+
+            if (!updated)
+                return NotFound("Complaint not found");
+
+            return Ok("Complaint status updated successfully");
         }
 
         [HttpDelete("complaints/{id}")]
