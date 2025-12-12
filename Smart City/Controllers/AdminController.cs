@@ -305,16 +305,24 @@ namespace Smart_City.Controllers
             return Ok(stats);
         }
         [HttpPut("suggestions/{id}/status")]
-        public IActionResult UpdateSuggestionStatus(int id, [FromBody] string status)
+        public IActionResult UpdateSuggestionStatus(int id, [FromBody] SuggestionStatusUpdateDto dto)
         {
-          var suggestion = _suggestionRepo.GetById(id);
-          if (suggestion == null)
-        return NotFound("Suggestion not found");
-
-        suggestion.Status = status;
-
-        var result = _suggestionRepo.Update(suggestion);
-        return result ? Ok("Suggestion status updated") : BadRequest("Failed to update status");
+            if (dto == null)
+                return BadRequest("Request body is missing.");
+        
+            if (string.IsNullOrWhiteSpace(dto.Status))
+                return BadRequest("Status cannot be empty.");
+        
+            var suggestion = _suggestionRepo.GetById(id);
+            if (suggestion == null)
+                return NotFound("Suggestion not found");
+        
+            suggestion.Status = dto.Status;
+        
+            var result = _suggestionRepo.Update(suggestion);
+            return result ? Ok("Suggestion status updated") : BadRequest("Failed to update status");
         }
+
     }
 }
+
