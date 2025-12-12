@@ -4,10 +4,10 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
-using Smart_City.Managers;
+//using Smart_City.Managers;
 using Smart_City.Mapping;
 using Smart_City.Models;
-using Smart_City.Repositories;
+//using Smart_City.Repositories;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -16,23 +16,25 @@ builder.Services.AddAutoMapper(typeof(AutoMapperProfile));
 
 // DbContext
 builder.Services.AddDbContext<SmartCityContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseSqlServer(builder.Configuration.GetConnectionString("SQLExpressConnection")));
 
 // =============== Repositories ===============
-builder.Services.AddScoped<IUserRepository, UserRepository>();
+/*builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IComplaintRepositry, ComplaintsRepositry>();
 builder.Services.AddScoped<ISuggestionsRepositories, SuggestionsRepositories>();
 builder.Services.AddScoped<IBillRepository, BillRepository>();
 builder.Services.AddScoped<INotificationsRepository, NotificationRepository>();
-builder.Services.AddScoped<IUtilityIssueRepository, UtilityIssueRepository>();
+builder.Services.AddScoped<IUtilityIssueRepository, UtilityIssueRepository>();*/
+builder.Services.AddApplicationRepositories();
 
 // =============== Managers ===============
-builder.Services.AddScoped<IAuthManager, AuthManager>();
+/*builder.Services.AddScoped<IAuthManager, AuthManager>();
 builder.Services.AddScoped<IUserManager, UserManager>();
 builder.Services.AddScoped<IComplaintManager, ComplaintManager>();
 builder.Services.AddScoped<ISuggestionManager, SuggestionManager>();
 builder.Services.AddScoped<INotificationManager, NotificationManager>();
-builder.Services.AddScoped<IUtilityIssueManager, UtilityIssueManager>();
+builder.Services.AddScoped<IUtilityIssueManager, UtilityIssueManager>();*/
+builder.Services.AddApplicationManagers();
 
 // =============== JWT ===============
 var jwtKey = builder.Configuration["Jwt:Key"];
