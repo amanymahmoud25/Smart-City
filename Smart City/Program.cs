@@ -4,6 +4,8 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using Smart_City.Extensions;
+
 //using Smart_City.Managers;
 using Smart_City.Mapping;
 using Smart_City.Models;

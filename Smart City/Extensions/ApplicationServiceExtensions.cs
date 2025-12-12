@@ -1,9 +1,9 @@
 ﻿using Smart_City.Managers;
 using Smart_City.Repositories;
 
-namespace Smart_City.Mapping;
+namespace Smart_City.Extensions;
 
-public static class ServiceExtensions
+public static class ApplicationServiceExtensions
 {
 	public static IServiceCollection AddApplicationRepositories(this IServiceCollection services)
 	{
