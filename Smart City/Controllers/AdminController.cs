@@ -174,6 +174,24 @@ namespace Smart_City.Controllers
             var result = _suggestionRepo.Delete(id);
             return result ? Ok("Suggestion deleted") : NotFound("Suggestion not found");
         }
+         [HttpPut("suggestions/{id}/status")]
+        public IActionResult UpdateSuggestionStatus(int id, [FromBody] SuggestionStatusUpdateDto dto)
+        {
+            if (dto == null)
+                return BadRequest("Request body is missing.");
+        
+            if (string.IsNullOrWhiteSpace(dto.Status))
+                return BadRequest("Status cannot be empty.");
+        
+            var suggestion = _suggestionRepo.GetById(id);
+            if (suggestion == null)
+                return NotFound("Suggestion not found");
+        
+            suggestion.Status = dto.Status;
+        
+            var result = _suggestionRepo.Update(suggestion);
+            return result ? Ok("Suggestion status updated") : BadRequest("Failed to update status");
+        }
 
         // ===================== BILLS =====================
         [HttpGet("bills")]
@@ -304,25 +322,9 @@ namespace Smart_City.Controllers
             };
             return Ok(stats);
         }
-        [HttpPut("suggestions/{id}/status")]
-        public IActionResult UpdateSuggestionStatus(int id, [FromBody] SuggestionStatusUpdateDto dto)
-        {
-            if (dto == null)
-                return BadRequest("Request body is missing.");
-        
-            if (string.IsNullOrWhiteSpace(dto.Status))
-                return BadRequest("Status cannot be empty.");
-        
-            var suggestion = _suggestionRepo.GetById(id);
-            if (suggestion == null)
-                return NotFound("Suggestion not found");
-        
-            suggestion.Status = dto.Status;
-        
-            var result = _suggestionRepo.Update(suggestion);
-            return result ? Ok("Suggestion status updated") : BadRequest("Failed to update status");
-        }
+       
 
     }
 }
+
 
