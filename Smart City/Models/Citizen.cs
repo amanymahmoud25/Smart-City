@@ -4,9 +4,6 @@
     {
       
 
-        public string Address { get; set; }
-
-
        public ICollection<Complaint> Complaints { get; set; }
 
         public ICollection<Suggestion> Suggestions { get; set; }
