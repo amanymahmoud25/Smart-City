@@ -49,7 +49,9 @@ namespace Smart_City.Controllers
                     u.Name,
                     u.Email,
                     u.Phone,
+                    u.NationalId,
                     u.Role,
+                    u.Address,
                     u.IsActive,
                     u.CreatedAt
                 })
@@ -69,8 +71,9 @@ namespace Smart_City.Controllers
                     u.Name,
                     u.Email,
                     u.Phone,
-                    u.Address,
+                    u.NationalId,
                     u.Role,
+                    u.Address,
                     u.IsActive,
                     u.CreatedAt
                 })
@@ -116,8 +119,12 @@ namespace Smart_City.Controllers
                 {
                     c.Id,
                     c.Title,
+                    c.Description,
                     c.Status,
+                    c.Location,
+                    c.ImageUrl,
                     c.DateSubmitted,
+                    c.UpdatedAt,
                     c.CitizenId
                 })
                 .ToList();
@@ -199,6 +206,7 @@ namespace Smart_City.Controllers
                 {
                     s.Id,
                     s.Title,
+                    s.Description,
                     s.Status,
                     s.DateSubmitted,
                     s.CitizenId
@@ -309,6 +317,7 @@ namespace Smart_City.Controllers
                 {
                     u.Id,
                     u.Type,
+                    u.Description,
                     u.Status,
                     u.ReportDate,
                     u.CitizenId
