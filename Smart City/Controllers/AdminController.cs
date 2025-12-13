@@ -296,9 +296,22 @@ namespace Smart_City.Controllers
         [HttpGet("notifications/{id}")]
         public IActionResult GetNotificationById(int id)
         {
-            var notif = _notificationRepo.GetById(id);
-            return notif == null ? NotFound("Notification not found") : Ok(notif);
+            var notif = _notificationRepo.GetAll()
+                .Where(n => n.Id == id)
+                .Select(n => new
+                {
+                    id = n.Id,
+                    message = n.Message,
+                    sentDate = n.SentDate,
+                    citizenId = n.CitizenId
+                })
+                .FirstOrDefault();
+        
+            return notif == null
+                ? NotFound("Notification not found")
+                : Ok(notif);
         }
+
 
         [HttpPost("notifications")]
             public IActionResult CreateNotification([FromBody] CreateNotificationDto dto)
@@ -344,6 +357,7 @@ namespace Smart_City.Controllers
 
     }
 }
+
 
 
 
