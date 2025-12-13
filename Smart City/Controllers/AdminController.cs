@@ -4,8 +4,10 @@ using Smart_City.Dtos;
 using Smart_City.Models;
 using Smart_City.Repositories;
 using System;
+using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
+
 namespace Smart_City.Controllers
 {
     [Route("api/admin")]
@@ -38,12 +40,42 @@ namespace Smart_City.Controllers
 
         // ===================== USERS =====================
         [HttpGet("users")]
-        public IActionResult GetAllUsers() => Ok(_userRepo.GetAll());
+        public IActionResult GetAllUsers()
+        {
+            var data = _userRepo.GetAll()
+                .Select(u => new
+                {
+                    u.Id,
+                    u.Name,
+                    u.Email,
+                    u.Phone,
+                    u.Role,
+                    u.IsActive,
+                    u.CreatedAt
+                })
+                .ToList();
+
+            return Ok(data);
+        }
 
         [HttpGet("users/{id}")]
         public IActionResult GetUserById(int id)
         {
-            var user = _userRepo.GetById(id);
+            var user = _userRepo.GetAll()
+                .Where(u => u.Id == id)
+                .Select(u => new
+                {
+                    u.Id,
+                    u.Name,
+                    u.Email,
+                    u.Phone,
+                    u.Address,
+                    u.Role,
+                    u.IsActive,
+                    u.CreatedAt
+                })
+                .FirstOrDefault();
+
             return user == null ? NotFound("User not found") : Ok(user);
         }
 
@@ -79,14 +111,39 @@ namespace Smart_City.Controllers
         [HttpGet("complaints")]
         public async Task<IActionResult> GetAllComplaints()
         {
-            var complaints = await _complaintRepo.GetAllAsync();
-            return Ok(complaints);
+            var data = (await _complaintRepo.GetAllAsync())
+                .Select(c => new
+                {
+                    c.Id,
+                    c.Title,
+                    c.Status,
+                    c.DateSubmitted,
+                    c.CitizenId
+                })
+                .ToList();
+
+            return Ok(data);
         }
 
         [HttpGet("complaints/{id}")]
         public async Task<IActionResult> GetComplaintById(int id)
         {
-            var complaint = await _complaintRepo.GetByIdAsync(id);
+            var complaint = (await _complaintRepo.GetAllAsync())
+                .Where(c => c.Id == id)
+                .Select(c => new
+                {
+                    c.Id,
+                    c.Title,
+                    c.Description,
+                    c.Status,
+                    c.Location,
+                    c.ImageUrl,
+                    c.DateSubmitted,
+                    c.UpdatedAt,
+                    c.CitizenId
+                })
+                .FirstOrDefault();
+
             return complaint == null ? NotFound("Complaint not found") : Ok(complaint);
         }
 
@@ -112,27 +169,18 @@ namespace Smart_City.Controllers
             existing.UpdatedAt = DateTime.UtcNow;
 
             var updated = await _complaintRepo.UpdateAsync(existing);
-            return updated
-                ? Ok("Complaint updated successfully")
-                : BadRequest("Failed to update complaint");
+            return updated ? Ok("Complaint updated successfully") : BadRequest("Failed to update complaint");
         }
 
         [HttpPut("complaints/{id}/status")]
         public async Task<IActionResult> UpdateComplaintStatus(int id, [FromBody] ComplaintStatusUpdateDto dto)
         {
-            if (!ModelState.IsValid)
-                return ValidationProblem(ModelState);
-
             var claimId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("id");
             if (!int.TryParse(claimId, out var adminId))
-                return Unauthorized(new { status = "error", message = "Invalid token" });
+                return Unauthorized("Invalid token");
 
             var updated = await _complaintRepo.UpdateStatusAsync(id, dto.Status, adminId);
-
-            if (!updated)
-                return NotFound("Complaint not found");
-
-            return Ok("Complaint status updated successfully");
+            return updated ? Ok("Complaint status updated") : NotFound("Complaint not found");
         }
 
         [HttpDelete("complaints/{id}")]
@@ -144,12 +192,38 @@ namespace Smart_City.Controllers
 
         // ===================== SUGGESTIONS =====================
         [HttpGet("suggestions")]
-        public IActionResult GetAllSuggestions() => Ok(_suggestionRepo.GetAll());
+        public IActionResult GetAllSuggestions()
+        {
+            var data = _suggestionRepo.GetAll()
+                .Select(s => new
+                {
+                    s.Id,
+                    s.Title,
+                    s.Status,
+                    s.DateSubmitted,
+                    s.CitizenId
+                })
+                .ToList();
+
+            return Ok(data);
+        }
 
         [HttpGet("suggestions/{id}")]
         public IActionResult GetSuggestionById(int id)
         {
-            var suggestion = _suggestionRepo.GetById(id);
+            var suggestion = _suggestionRepo.GetAll()
+                .Where(s => s.Id == id)
+                .Select(s => new
+                {
+                    s.Id,
+                    s.Title,
+                    s.Description,
+                    s.Status,
+                    s.DateSubmitted,
+                    s.CitizenId
+                })
+                .FirstOrDefault();
+
             return suggestion == null ? NotFound("Suggestion not found") : Ok(suggestion);
         }
 
@@ -173,33 +247,42 @@ namespace Smart_City.Controllers
             var result = _suggestionRepo.Delete(id);
             return result ? Ok("Suggestion deleted") : NotFound("Suggestion not found");
         }
-         [HttpPut("suggestions/{id}/status")]
-        public IActionResult UpdateSuggestionStatus(int id, [FromBody] SuggestionStatusUpdateDto dto)
-        {
-            if (dto == null)
-                return BadRequest("Request body is missing.");
-        
-            if (string.IsNullOrWhiteSpace(dto.Status))
-                return BadRequest("Status cannot be empty.");
-        
-            var suggestion = _suggestionRepo.GetById(id);
-            if (suggestion == null)
-                return NotFound("Suggestion not found");
-        
-            suggestion.Status = dto.Status;
-        
-            var result = _suggestionRepo.Update(suggestion);
-            return result ? Ok("Suggestion status updated") : BadRequest("Failed to update status");
-        }
 
         // ===================== BILLS =====================
         [HttpGet("bills")]
-        public IActionResult GetAllBills() => Ok(_billRepo.GetAll());
+        public IActionResult GetAllBills()
+        {
+            var data = _billRepo.GetAll()
+                .Select(b => new
+                {
+                    b.Id,
+                    b.Type,
+                    b.Amount,
+                    b.IssueDate,
+                    b.IsPaid,
+                    b.CitizenId
+                })
+                .ToList();
+
+            return Ok(data);
+        }
 
         [HttpGet("bills/{id}")]
         public IActionResult GetBillById(int id)
         {
-            var bill = _billRepo.GetById(id);
+            var bill = _billRepo.GetAll()
+                .Where(b => b.Id == id)
+                .Select(b => new
+                {
+                    b.Id,
+                    b.Type,
+                    b.Amount,
+                    b.IssueDate,
+                    b.IsPaid,
+                    b.CitizenId
+                })
+                .FirstOrDefault();
+
             return bill == null ? NotFound("Bill not found") : Ok(bill);
         }
 
@@ -217,68 +300,45 @@ namespace Smart_City.Controllers
             return result ? Ok("Bill deleted") : NotFound("Bill not found");
         }
 
-        [HttpGet("bills/citizen/{citizenId}")]
-        public IActionResult GetBillsByCitizenId(int citizenId)
-        {
-            var bills = _billRepo.GetByCitizenId(citizenId);
-            return Ok(bills);
-        }
-
         // ===================== UTILITY ISSUES =====================
         [HttpGet("utility-issues")]
-        public IActionResult GetAllUtilityIssues() => Ok(_utilityRepo.GetAll());
+        public IActionResult GetAllUtilityIssues()
+        {
+            var data = _utilityRepo.GetAll()
+                .Select(u => new
+                {
+                    u.Id,
+                    u.Type,
+                    u.Status,
+                    u.ReportDate,
+                    u.CitizenId
+                })
+                .ToList();
+
+            return Ok(data);
+        }
 
         [HttpGet("utility-issues/{id}")]
         public IActionResult GetUtilityIssueById(int id)
         {
-            var issue = _utilityRepo.GetById(id);
+            var issue = _utilityRepo.GetAll()
+                .Where(u => u.Id == id)
+                .Select(u => new
+                {
+                    u.Id,
+                    u.Type,
+                    u.Description,
+                    u.Status,
+                    u.ReportDate,
+                    u.CitizenId
+                })
+                .FirstOrDefault();
+
             return issue == null ? NotFound("Issue not found") : Ok(issue);
         }
 
-        [HttpPut("utility-issues/{id}")]
-        public IActionResult UpdateUtilityIssue(int id, [FromBody] UtilityIssue updated)
-        {
-            var issue = _utilityRepo.GetById(id);
-            if (issue == null) return NotFound("Issue not found");
-
-            issue.Description = updated.Description ?? issue.Description;
-            issue.Status = updated.Status ?? issue.Status;
-            issue.Type = updated.Type;
-
-            var result = _utilityRepo.Update(issue);
-            return result ? Ok("Utility issue updated") : BadRequest("Failed to update");
-        }
-
-        [HttpPut("utility-issues/{id}/resolve")]
-        public IActionResult ResolveUtilityIssue(int id)
-        {
-            var result = _utilityRepo.MarkAsResolved(id);
-            return result ? Ok("Utility issue marked as resolved") : NotFound("Issue not found");
-        }
-
-        [HttpDelete("utility-issues/{id}")]
-        public IActionResult DeleteUtilityIssue(int id)
-        {
-            var result = _utilityRepo.Delete(id);
-            return result ? Ok("Utility issue deleted") : NotFound("Issue not found");
-        }
-
-        [HttpGet("utility-issues/status/{status}")]
-        public IActionResult GetByStatus(string status)
-        {
-            var list = _utilityRepo.GetByStatus(status);
-            return Ok(list);
-        }
-
-        [HttpGet("utility-issues/type/{type}")]
-        public IActionResult GetByType(UtilityIssueType type)
-        {
-            var list = _utilityRepo.GetByType(type);
-            return Ok(list);
-        }
-
         // ===================== NOTIFICATIONS =====================
-       [HttpGet("notifications")]
+        [HttpGet("notifications")]
         public IActionResult GetAllNotifications()
         {
             var data = _notificationRepo.GetAll()
@@ -288,8 +348,9 @@ namespace Smart_City.Controllers
                     n.Message,
                     n.SentDate,
                     n.CitizenId
-                });
-        
+                })
+                .ToList();
+
             return Ok(data);
         }
 
@@ -300,66 +361,45 @@ namespace Smart_City.Controllers
                 .Where(n => n.Id == id)
                 .Select(n => new
                 {
-                    id = n.Id,
-                    message = n.Message,
-                    sentDate = n.SentDate,
-                    citizenId = n.CitizenId
+                    n.Id,
+                    n.Message,
+                    n.SentDate,
+                    n.CitizenId
                 })
                 .FirstOrDefault();
-        
-            return notif == null
-                ? NotFound("Notification not found")
-                : Ok(notif);
+
+            return notif == null ? NotFound("Notification not found") : Ok(notif);
         }
 
-
         [HttpPost("notifications")]
-            public IActionResult CreateNotification([FromBody] CreateNotificationDto dto)
-            {
-                var notification = new Notification
-                {
-                    CitizenId = dto.CitizenId,
-                    Message = dto.Message,
-                    SentDate = DateTime.UtcNow
-                };
-
-                var result = _notificationRepo.Add(notification);
-                return result ? Ok("Notification created") : BadRequest("Failed to create notification");
-            }
-
-
-        [HttpDelete("notifications/{id}")]
-        public IActionResult DeleteNotification(int id)
+        public IActionResult CreateNotification([FromBody] CreateNotificationDto dto)
         {
-            var result = _notificationRepo.Delete(id);
-            return result ? Ok("Notification deleted") : NotFound("Notification not found");
+            var notification = new Notification
+            {
+                CitizenId = dto.CitizenId,
+                Message = dto.Message,
+                SentDate = DateTime.UtcNow
+            };
+
+            var result = _notificationRepo.Add(notification);
+            return result ? Ok("Notification created") : BadRequest("Failed to create notification");
         }
 
         // ===================== DASHBOARD =====================
         [HttpGet("dashboard/stats")]
         public async Task<IActionResult> GetSystemStats()
         {
-            var allComplaints = await _complaintRepo.GetAllAsync();
-            var unresolved = await _complaintRepo.GetUnresolvedAsync();
-
             var stats = new
             {
                 TotalUsers = _userRepo.GetAll().Count,
-                TotalComplaints = allComplaints.Count,
-                UnresolvedComplaints = unresolved.Count,
+                TotalComplaints = (await _complaintRepo.GetAllAsync()).Count,
                 TotalSuggestions = _suggestionRepo.GetAll().Count,
                 TotalBills = _billRepo.GetAll().Count,
-                TotalUtilityIssues = _utilityRepo.GetAll().Count
+                TotalUtilityIssues = _utilityRepo.GetAll().Count,
+                TotalNotifications = _notificationRepo.GetAll().Count
             };
+
             return Ok(stats);
         }
-       
-
     }
 }
-
-
-
-
-
-
