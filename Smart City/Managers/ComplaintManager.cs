@@ -9,14 +9,16 @@ namespace Smart_City.Managers
     {
         private readonly IComplaintRepositry _repo;
         private readonly IMapper _map;
+		private readonly INotificationManager _notificationManager;
 
-        public ComplaintManager(IComplaintRepositry repo, IMapper map)
-        {
-            _repo = repo;
-            _map = map;
-        }
+		public ComplaintManager(IComplaintRepositry repo, IMapper map, INotificationManager notificationManager)
+		{
+			_repo = repo;
+			_map = map;
+			_notificationManager = notificationManager;
+		}
 
-        public async Task<ComplaintDto?> CreateAsync(ComplaintCreateDto dto, int citizenId)
+		public async Task<ComplaintDto?> CreateAsync(ComplaintCreateDto dto, int citizenId)
         {
             var entity = _map.Map<Complaint>(dto);
             entity.CitizenId = citizenId;
@@ -103,9 +105,11 @@ namespace Smart_City.Managers
         public async Task<ComplaintDto?> UpdateStatusAsync(int id, ComplaintStatus? newStatus, int adminId, string? note)
         {
             if (!newStatus.HasValue) return null;
-
+            
             var entity = await _repo.UpdateStatusAsync(id, newStatus.Value, adminId, note);
-            return _map.Map<ComplaintDto?>(entity);
+			var complaint = await _repo.GetByIdAsync(id);
+			_notificationManager.CreateForCitizen(complaint.CitizenId, $"Your complaint #{complaint.Id} status changed to: {newStatus}");
+			return _map.Map<ComplaintDto?>(entity);
         }
     }
 }
