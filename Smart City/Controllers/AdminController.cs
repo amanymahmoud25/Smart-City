@@ -144,29 +144,66 @@ namespace Smart_City.Controllers
         }
 
         // ===================== SUGGESTIONS =====================
-        [HttpGet("suggestions")]
-        public IActionResult GetAllSuggestions() => Ok(_suggestionRepo.GetAll());
+           [HttpGet("suggestions")]
+            public IActionResult GetAllSuggestions()
+            {
+                var data = _suggestionRepo.GetAll()
+                    .Select(s => new
+                    {
+                        s.Id,
+                        s.Title,
+                        s.Description,
+                        s.Status,
+                        s.DateSubmitted,
+                        s.CitizenId
+                    })
+                    .ToList();
+            
+                return Ok(data);
+            }
+
 
         [HttpGet("suggestions/{id}")]
         public IActionResult GetSuggestionById(int id)
         {
-            var suggestion = _suggestionRepo.GetById(id);
-            return suggestion == null ? NotFound("Suggestion not found") : Ok(suggestion);
+            var suggestion = _suggestionRepo.GetAll()
+                .Where(s => s.Id == id)
+                .Select(s => new
+                {
+                    s.Id,
+                    s.Title,
+                    s.Description,
+                    s.Status,
+                    s.DateSubmitted,
+                    s.CitizenId
+                })
+                .FirstOrDefault();
+        
+            return suggestion == null
+                ? NotFound("Suggestion not found")
+                : Ok(suggestion);
         }
 
+
         [HttpPut("suggestions/{id}")]
-        public IActionResult UpdateSuggestion(int id, [FromBody] Suggestion updated)
+        public IActionResult UpdateSuggestion(int id, [FromBody] SuggestionUpdateDto dto)
         {
             var suggestion = _suggestionRepo.GetById(id);
             if (suggestion == null) return NotFound("Suggestion not found");
-
-            suggestion.Title = updated.Title ?? suggestion.Title;
-            suggestion.Description = updated.Description ?? suggestion.Description;
-            suggestion.Status = updated.Status ?? suggestion.Status;
-
+        
+            if (!string.IsNullOrWhiteSpace(dto.Title))
+                suggestion.Title = dto.Title;
+        
+            if (!string.IsNullOrWhiteSpace(dto.Description))
+                suggestion.Description = dto.Description;
+        
+            if (!string.IsNullOrWhiteSpace(dto.Status))
+                suggestion.Status = dto.Status;
+        
             var result = _suggestionRepo.Update(suggestion);
             return result ? Ok("Suggestion updated") : BadRequest("Failed to update");
         }
+
 
         [HttpDelete("suggestions/{id}")]
         public IActionResult DeleteSuggestion(int id)
@@ -282,25 +319,36 @@ namespace Smart_City.Controllers
         [HttpGet("notifications")]
         public IActionResult GetAllNotifications()
         {
-            try
-            {
-                var data = _notificationRepo.GetAll();
-                return Ok(data);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, ex.Message);
-            }
+            var data = _notificationRepo.GetAll()
+                .Select(n => new
+                {
+                    n.Id,
+                    n.Message,
+                    n.SentDate,
+                    n.CitizenId
+                })
+                .ToList();
+        
+            return Ok(data);
         }
 
-
         [HttpPost("notifications")]
-        public IActionResult CreateNotification([FromBody] Notification notification)
+        public IActionResult CreateNotification([FromBody] CreateNotificationDto dto)
         {
-            notification.SentDate = DateTime.UtcNow;
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+        
+            var notification = new Notification
+            {
+                CitizenId = dto.CitizenId,
+                Message = dto.Message,
+                SentDate = DateTime.UtcNow
+            };
+        
             var result = _notificationRepo.Add(notification);
             return result ? Ok("Notification created") : BadRequest("Failed to create notification");
         }
+
 
         [HttpDelete("notifications/{id}")]
         public IActionResult DeleteNotification(int id)
@@ -331,5 +379,6 @@ namespace Smart_City.Controllers
 
     }
 }
+
 
 
