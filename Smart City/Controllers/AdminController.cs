@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Smart_City.Dtos;
+using Smart_City.Managers;
 using Smart_City.Models;
 using Smart_City.Repositories;
 using System;
@@ -20,14 +21,15 @@ namespace Smart_City.Controllers
         private readonly IUtilityIssueRepository _utilityRepo;
         private readonly IBillRepository _billRepo;
         private readonly INotificationsRepository _notificationRepo;
+        private readonly IComplaintManager _complaintManager;
 
-        public AdminController(
+		public AdminController(
             IUserRepository userRepo,
             IComplaintRepositry complaintRepo,
             ISuggestionsRepositories suggestionRepo,
             IUtilityIssueRepository utilityRepo,
             IBillRepository billRepo,
-            INotificationsRepository notificationRepo)
+            INotificationsRepository notificationRepo, IComplaintManager complaintManager)
         {
             _userRepo = userRepo;
             _complaintRepo = complaintRepo;
@@ -35,7 +37,8 @@ namespace Smart_City.Controllers
             _utilityRepo = utilityRepo;
             _billRepo = billRepo;
             _notificationRepo = notificationRepo;
-        }
+            _complaintManager = complaintManager;
+		}
 
         // ===================== USERS =====================
         [HttpGet("users")]
