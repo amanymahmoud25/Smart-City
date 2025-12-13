@@ -279,8 +279,20 @@ namespace Smart_City.Controllers
         }
 
         // ===================== NOTIFICATIONS =====================
-        [HttpGet("notifications")]
-        public IActionResult GetAllNotifications() => Ok(_notificationRepo.GetAll());
+       [HttpGet("notifications")]
+        public IActionResult GetAllNotifications()
+        {
+            var data = _notificationRepo.GetAll()
+                .Select(n => new
+                {
+                    n.Id,
+                    n.Message,
+                    n.SentDate,
+                    n.CitizenId
+                });
+        
+            return Ok(data);
+        }
 
         [HttpGet("notifications/{id}")]
         public IActionResult GetNotificationById(int id)
@@ -290,12 +302,19 @@ namespace Smart_City.Controllers
         }
 
         [HttpPost("notifications")]
-        public IActionResult CreateNotification([FromBody] Notification notification)
-        {
-            notification.SentDate = DateTime.UtcNow;
-            var result = _notificationRepo.Add(notification);
-            return result ? Ok("Notification created") : BadRequest("Failed to create notification");
-        }
+            public IActionResult CreateNotification([FromBody] CreateNotificationDto dto)
+            {
+                var notification = new Notification
+                {
+                    CitizenId = dto.CitizenId,
+                    Message = dto.Message,
+                    SentDate = DateTime.UtcNow
+                };
+
+                var result = _notificationRepo.Add(notification);
+                return result ? Ok("Notification created") : BadRequest("Failed to create notification");
+            }
+
 
         [HttpDelete("notifications/{id}")]
         public IActionResult DeleteNotification(int id)
@@ -326,5 +345,6 @@ namespace Smart_City.Controllers
 
     }
 }
+
 
 
