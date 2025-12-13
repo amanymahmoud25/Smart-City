@@ -6,7 +6,6 @@ using Smart_City.Repositories;
 using System;
 using System.Security.Claims;
 using System.Threading.Tasks;
-using Smart_City.DTOs;
 namespace Smart_City.Controllers
 {
     [Route("api/admin")]
@@ -345,6 +344,7 @@ namespace Smart_City.Controllers
 
     }
 }
+
 
 
 
